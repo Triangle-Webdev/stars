@@ -1,6 +1,6 @@
 "use client";
 import { Canvas, Drawable } from "./canvas";
-import { BSTNode, calculateNodePositions, createNode, findDepth } from "./node";
+import { BSTNode, calculateNodePositions, createNode, Vertice } from "./node";
 
 const DEFAULT_CONFIG = {
   radius: 20,
@@ -10,33 +10,41 @@ const DEFAULT_CONFIG = {
 };
 
 const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
-  _drawNodeWithCoords(ctx, createNode(1, null, null));
-
-  // _drawNode(
-  //   ctx,
-  //   createNode(2, createNode(1, null, null), createNode(3, null, null)),
-  // );
-
-  // const { x1, y1 } = { x1: 100, y1: 100 };
-  // const { x2, y2 } = { x2: centerWidth, y2: centerHeight };
-  // const { radius } = DEFAULT_CONFIG;
-  // connectEdge(ctx, x1, x2, y1 + radius, y2 - radius);
+  _drawNodeWithCoords(ctx, createNode(1));
 };
 
-const _drawNodeWithCoords = (
-  ctx: CanvasRenderingContext2D,
-  node: BSTNode<number | string> | null,
-) => {
+const _drawNodeWithCoords = (ctx: CanvasRenderingContext2D, node?: BSTNode) => {
   if (!node) return;
-  // move this to a function that returns the real x and y coords
-  calculateNodePositions(node).forEach(({ value, xOffset, yOffset }) =>
-    drawNode(
-      ctx,
-      xOffset * ctx.canvas.width,
-      yOffset * ctx.canvas.height + DEFAULT_CONFIG.nodeHeightSpacing,
-      value as any,
-    ),
-  );
+  const adjList = calculateNodePositions(node);
+
+  adjList
+    .entries()
+    .map(([k, { value, xOffset, yOffset, edges }]) => ({
+      value: value,
+      x: xOffset * ctx.canvas.width,
+      y: yOffset * ctx.canvas.height + DEFAULT_CONFIG.nodeHeightSpacing,
+      edges,
+    }))
+    .forEach(({ value, x, y, edges }) => {
+      drawNode(ctx, x, y, value);
+      edges
+        .map((n) => adjList.get(n) as Vertice)
+        .map((neighbor) => ({
+          x: neighbor.xOffset * ctx.canvas.width,
+          y:
+            neighbor.yOffset * ctx.canvas.height +
+            DEFAULT_CONFIG.nodeHeightSpacing,
+        }))
+        .forEach((neighborCoords) => {
+          connectEdge(
+            ctx,
+            x,
+            neighborCoords.x,
+            y + DEFAULT_CONFIG.radius,
+            neighborCoords.y - DEFAULT_CONFIG.radius,
+          );
+        });
+    });
 };
 
 const drawNode = (

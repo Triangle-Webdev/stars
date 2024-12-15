@@ -3,10 +3,7 @@
 import React from "react";
 import { useCanvas } from "./useCanvas";
 
-export type Drawable = (
-  ctx: CanvasRenderingContext2D,
-  frameCount: number,
-) => void;
+export type Drawable = (ctx: CanvasRenderingContext2D) => void;
 export interface CanvasProps {
   drawAction: Drawable;
 }

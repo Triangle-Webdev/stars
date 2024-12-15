@@ -13,18 +13,7 @@ export const useCanvas = (drawAction: Drawable) => {
     canvas.height = maxHeight - 100;
     canvas.width = maxWidth - 100;
     const context = canvas?.getContext("2d") as CanvasRenderingContext2D;
-    let frameCount = 0;
-    let animationFrameId: number;
-    // const render = () => {
-    // frameCount++;
-    drawAction(context, frameCount);
-    // animationFrameId = window.requestAnimationFrame(render);
-    // };
-    // render();
-
-    return () => {
-      // window.cancelAnimationFrame(animationFrameId);
-    };
+    drawAction(context);
   }, [drawAction]);
 
   return ref;
