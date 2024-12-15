@@ -1,5 +1,6 @@
 "use client";
 import { Canvas, Drawable } from "./canvas";
+import { BSTNode, calculateNodePositions, createNode, findDepth } from "./node";
 
 const DEFAULT_CONFIG = {
   radius: 20,
@@ -9,24 +10,40 @@ const DEFAULT_CONFIG = {
 };
 
 const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
-  const maxHeight = ctx.canvas.height;
-  const maxWidth = ctx.canvas.width;
-  const centerHeight = maxHeight / 2;
-  const centerWidth = maxWidth / 2;
-  drawNode(ctx, centerWidth, centerHeight, "dn1");
-  drawNode(ctx, 100, 100, "dn2");
+  _drawNodeWithCoords(ctx, createNode(1, null, null));
 
-  const { x1, y1 } = { x1: 100, y1: 100 };
-  const { x2, y2 } = { x2: centerWidth, y2: centerHeight };
-  const { radius } = DEFAULT_CONFIG;
-  connectEdge(ctx, x1, x2, y1 + radius, y2 - radius);
+  // _drawNode(
+  //   ctx,
+  //   createNode(2, createNode(1, null, null), createNode(3, null, null)),
+  // );
+
+  // const { x1, y1 } = { x1: 100, y1: 100 };
+  // const { x2, y2 } = { x2: centerWidth, y2: centerHeight };
+  // const { radius } = DEFAULT_CONFIG;
+  // connectEdge(ctx, x1, x2, y1 + radius, y2 - radius);
+};
+
+const _drawNodeWithCoords = (
+  ctx: CanvasRenderingContext2D,
+  node: BSTNode<number | string> | null,
+) => {
+  if (!node) return;
+  // move this to a function that returns the real x and y coords
+  calculateNodePositions(node).forEach(({ value, xOffset, yOffset }) =>
+    drawNode(
+      ctx,
+      xOffset * ctx.canvas.width,
+      yOffset * ctx.canvas.height + DEFAULT_CONFIG.nodeHeightSpacing,
+      value as any,
+    ),
+  );
 };
 
 const drawNode = (
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  value: string,
+  value: number | string,
 ) => {
   ctx.beginPath();
   ctx.arc(x, y, DEFAULT_CONFIG.radius, 0, 2 * Math.PI, false);
@@ -41,7 +58,7 @@ const drawNode = (
   ctx.font = `${DEFAULT_CONFIG.fontSize}pt serif`;
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
-  ctx.fillText(value, x, y + DEFAULT_CONFIG.fontSize / 2);
+  ctx.fillText(`${value}`, x, y + DEFAULT_CONFIG.fontSize / 2);
 };
 
 const connectEdge = (
