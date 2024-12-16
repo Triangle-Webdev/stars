@@ -10,14 +10,13 @@ export const createNode = (
   right?: BSTNode,
 ): BSTNode => ({ value, left, right });
 
-const _findDepth = (curDepth: number, node?: BSTNode): number => {
-  if (!node) return curDepth;
-  if (!node.left && !node.right) return curDepth + 1;
-
-  let leftDepth = _findDepth(curDepth + 1, node.left);
-  let rightDepth = _findDepth(curDepth + 1, node.right);
-  return Math.max(leftDepth, rightDepth);
-};
+const _findDepth = (curDepth: number, node?: BSTNode): number =>
+  node
+    ? Math.max(
+        _findDepth(curDepth, node.left),
+        _findDepth(curDepth, node.right),
+      ) + 1
+    : curDepth;
 
 export const findDepth = (node?: BSTNode): number => _findDepth(0, node);
 
@@ -29,62 +28,72 @@ export type Vertice = {
 };
 export type Graph = Map<number, Vertice>;
 
+export const calculateChildOffset = (
+  parentXOffset: number,
+  depth: number,
+): {
+  left: number;
+  right: number;
+} => {
+  const additionalOffset = 1 / 2 ** (depth + 1);
+  return {
+    left: parentXOffset - additionalOffset,
+    right: parentXOffset + additionalOffset,
+  };
+};
+
+const _calculateNodePositions = ({
+  value,
+  left,
+  right,
+  depth,
+  xOffset,
+  adjacencyList,
+}: BSTNode & {
+  depth: number;
+  xOffset: number;
+  adjacencyList: Graph;
+}): Graph => {
+  let edges: number[] = [];
+  const nextCoords = calculateChildOffset(xOffset, depth);
+  if (left) {
+    edges.push(left.value);
+    _calculateNodePositions({
+      ...left,
+      depth: depth + 1,
+      xOffset: nextCoords.left,
+      adjacencyList,
+    });
+  }
+  if (right) {
+    edges.push(right.value);
+    _calculateNodePositions({
+      ...right,
+      depth: depth + 1,
+      xOffset: nextCoords.right,
+      adjacencyList,
+    });
+  }
+  adjacencyList.set(value, {
+    value,
+    xOffset,
+    yOffset: (depth - 1) * 0.1,
+    edges,
+  });
+  return adjacencyList;
+};
+
 export const calculateNodePositions = ({
   value,
   left,
   right,
 }: BSTNode): Graph => {
-  const maxDepth = findDepth({ value, left, right });
-  const levelCoefficient = 1.0 / maxDepth;
-  const maxNodesInRow = maxDepth ** 2;
-  const widthCoeffecient = 1.0 / maxNodesInRow;
-
-  const adjacencyList: Graph = new Map();
-  const firstRowOffset = 1 / 2;
-  const secondRowOffset = 1 / 3;
-  const thirdRowOffset = 1 / 5;
-
-  const xStart = 0;
-  const xEnd = 1.0;
-  const xPos = (xStart + xEnd) / 2;
-
-  adjacencyList.set(value, { value, xOffset: 0.5, yOffset: 0, edges: [2, 3] });
-  adjacencyList.set(2, {
-    value: 2,
-    xOffset: 0.25,
-    yOffset: 0.1,
-    edges: [4, 5],
+  return _calculateNodePositions({
+    value,
+    left,
+    right,
+    depth: 1,
+    xOffset: 0.5,
+    adjacencyList: new Map(),
   });
-  adjacencyList.set(3, {
-    value: 3,
-    xOffset: 0.75,
-    yOffset: 0.1,
-    edges: [6, 7],
-  });
-  adjacencyList.set(4, {
-    value: 4,
-    xOffset: 0.125,
-    yOffset: 0.2,
-    edges: [],
-  });
-  adjacencyList.set(5, {
-    value: 5,
-    xOffset: 0.375,
-    yOffset: 0.2,
-    edges: [],
-  });
-  adjacencyList.set(6, {
-    value: 6,
-    xOffset: 0.625,
-    yOffset: 0.2,
-    edges: [],
-  });
-  adjacencyList.set(7, {
-    value: 7,
-    xOffset: 0.875,
-    yOffset: 0.2,
-    edges: [],
-  });
-
-  return adjacencyList;
 };

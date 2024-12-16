@@ -13,35 +13,42 @@ const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
   _drawNodeWithCoords(ctx, createNode(1));
 };
 
+const root = createNode(
+  1,
+  createNode(
+    2,
+    createNode(4, createNode(8)),
+    createNode(5, undefined, createNode(9)),
+  ),
+  createNode(3, createNode(6), createNode(7)),
+);
+
 const _drawNodeWithCoords = (ctx: CanvasRenderingContext2D, node?: BSTNode) => {
   if (!node) return;
-  const adjList = calculateNodePositions(node);
+
+  const adjList = calculateNodePositions(root);
+  const { height, width } = ctx.canvas;
+  const { radius, nodeHeightSpacing } = DEFAULT_CONFIG;
 
   adjList
     .entries()
     .map(([k, { value, xOffset, yOffset, edges }]) => ({
       value: value,
-      x: xOffset * ctx.canvas.width,
-      y: yOffset * ctx.canvas.height + DEFAULT_CONFIG.nodeHeightSpacing,
+      x: xOffset * width,
+      y: yOffset * height + nodeHeightSpacing,
       edges,
     }))
     .forEach(({ value, x, y, edges }) => {
       drawNode(ctx, x, y, value);
       edges
         .map((n) => adjList.get(n) as Vertice)
-        .map((neighbor) => ({
-          x: neighbor.xOffset * ctx.canvas.width,
-          y:
-            neighbor.yOffset * ctx.canvas.height +
-            DEFAULT_CONFIG.nodeHeightSpacing,
-        }))
-        .forEach((neighborCoords) => {
+        .forEach(({ xOffset, yOffset }) => {
           connectEdge(
             ctx,
             x,
-            neighborCoords.x,
-            y + DEFAULT_CONFIG.radius,
-            neighborCoords.y - DEFAULT_CONFIG.radius,
+            xOffset * width,
+            y + radius,
+            yOffset * height + nodeHeightSpacing - radius,
           );
         });
     });

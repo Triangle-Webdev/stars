@@ -1,4 +1,9 @@
-import { calculateNodePositions, createNode, findDepth } from "./node";
+import {
+  calculateChildOffset,
+  calculateNodePositions,
+  createNode,
+  findDepth,
+} from "./node";
 
 describe("node logic", () => {
   describe("findDepth", () => {
@@ -25,11 +30,43 @@ describe("node logic", () => {
     });
   });
 
-  // @Todo fix this test to work with updated logic
+  describe("calculateChildOffset", () => {
+    it.each([
+      [0.5, 1, { left: 0.25, right: 0.75 }],
+      [0.25, 2, { left: 0.125, right: 0.375 }],
+      [0.75, 2, { left: 0.625, right: 0.875 }],
+    ])(
+      "takes coords start %i and end %i to calculate child position %i",
+      (xStart, xEnd, expected) => {
+        expect(calculateChildOffset(xStart, xEnd)).toEqual(expected);
+      },
+    );
+  });
+
   describe("calculateNodePositions", () => {
     it("should return offset 0, 0 for root node", () => {
-      const expected = [{ value: 1, xOffset: 0.5, yOffset: 0 }];
+      const expected = new Map();
+      expected.set(1, { value: 1, xOffset: 0.5, yOffset: 0, edges: [] });
       const actual = calculateNodePositions(createNode(1));
+      expect(actual).toEqual(expected);
+    });
+
+    it("should have an edge when a node has a child", () => {
+      const expected = new Map();
+      expected.set(1, { value: 1, xOffset: 0.5, yOffset: 0, edges: [2] });
+      expected.set(2, { value: 2, xOffset: 0.25, yOffset: 0.1, edges: [] });
+      const actual = calculateNodePositions(createNode(1, createNode(2)));
+      expect(actual).toEqual(expected);
+    });
+
+    it("should have two edges when a node has two children", () => {
+      const expected = new Map();
+      expected.set(1, { value: 1, xOffset: 0.5, yOffset: 0, edges: [2, 3] });
+      expected.set(2, { value: 2, xOffset: 0.25, yOffset: 0.1, edges: [] });
+      expected.set(3, { value: 3, xOffset: 0.75, yOffset: 0.1, edges: [] });
+      const actual = calculateNodePositions(
+        createNode(1, createNode(2), createNode(3)),
+      );
       expect(actual).toEqual(expected);
     });
   });
