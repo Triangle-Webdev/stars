@@ -4,21 +4,18 @@ export type BSTNode = {
   right?: BSTNode;
 };
 
-export const createNode = (
+export const node = (
   value: number,
   left?: BSTNode,
   right?: BSTNode,
 ): BSTNode => ({ value, left, right });
 
-const _findDepth = (curDepth: number, node?: BSTNode): number =>
+const _height = (curDepth: number, node?: BSTNode): number =>
   node
-    ? Math.max(
-        _findDepth(curDepth, node.left),
-        _findDepth(curDepth, node.right),
-      ) + 1
+    ? Math.max(_height(curDepth, node.left), _height(curDepth, node.right)) + 1
     : curDepth;
 
-export const findDepth = (node?: BSTNode): number => _findDepth(0, node);
+export const height = (node?: BSTNode): number => _height(0, node);
 
 export type Vertice = {
   value: number;
@@ -26,9 +23,10 @@ export type Vertice = {
   yOffset: number;
   edges: number[];
 };
+
 export type Graph = Map<number, Vertice>;
 
-export const calculateChildOffset = (
+export const childOffset = (
   parentXOffset: number,
   depth: number,
 ): {
@@ -42,58 +40,62 @@ export const calculateChildOffset = (
   };
 };
 
-const _calculateNodePositions = ({
+const yOffset = (maxDepth: number) => (curDepth: number) =>
+  (curDepth - 1) / maxDepth;
+
+const _nodePositions = ({
   value,
   left,
   right,
   depth,
   xOffset,
   adjacencyList,
+  calcYOffset,
 }: BSTNode & {
   depth: number;
   xOffset: number;
   adjacencyList: Graph;
+  calcYOffset: (curDepth: number) => number;
 }): Graph => {
   let edges: number[] = [];
-  const nextCoords = calculateChildOffset(xOffset, depth);
+  const childCoords = childOffset(xOffset, depth);
   if (left) {
     edges.push(left.value);
-    _calculateNodePositions({
+    _nodePositions({
       ...left,
       depth: depth + 1,
-      xOffset: nextCoords.left,
+      xOffset: childCoords.left,
       adjacencyList,
+      calcYOffset,
     });
   }
   if (right) {
     edges.push(right.value);
-    _calculateNodePositions({
+    _nodePositions({
       ...right,
       depth: depth + 1,
-      xOffset: nextCoords.right,
+      xOffset: childCoords.right,
       adjacencyList,
+      calcYOffset,
     });
   }
   adjacencyList.set(value, {
     value,
     xOffset,
-    yOffset: (depth - 1) * 0.1,
+    yOffset: calcYOffset(depth),
     edges,
   });
   return adjacencyList;
 };
 
-export const calculateNodePositions = ({
-  value,
-  left,
-  right,
-}: BSTNode): Graph => {
-  return _calculateNodePositions({
+export const nodePositions = ({ value, left, right }: BSTNode): Graph => {
+  return _nodePositions({
     value,
     left,
     right,
     depth: 1,
     xOffset: 0.5,
     adjacencyList: new Map(),
+    calcYOffset: yOffset(height({ value, left, right })),
   });
 };

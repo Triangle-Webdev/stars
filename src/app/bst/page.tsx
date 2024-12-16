@@ -1,34 +1,36 @@
 "use client";
 import { Canvas, Drawable } from "./canvas";
-import { BSTNode, calculateNodePositions, createNode, Vertice } from "./node";
+import {
+  drawBezierCurve,
+  drawCircle,
+  fillCircle,
+  writeText,
+} from "./drawUtils";
+import { BSTNode, nodePositions, node, Vertice } from "./node";
 
 const DEFAULT_CONFIG = {
-  radius: 20,
+  radius: 40,
   nodeWidthSpacing: 25,
   nodeHeightSpacing: 100,
-  fontSize: 10,
+  fontSize: 20,
 };
 
 const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
-  _drawNodeWithCoords(ctx, createNode(1));
+  _drawNodes(ctx, node(1));
 };
 
-const root = createNode(
+const root = node(
   1,
-  createNode(
-    2,
-    createNode(4, createNode(8)),
-    createNode(5, undefined, createNode(9)),
-  ),
-  createNode(3, createNode(6), createNode(7)),
+  node(2, node(4, node(8), node(10)), node(5, undefined, node(9))),
+  node(3, node(6), node(7)),
 );
 
-const _drawNodeWithCoords = (ctx: CanvasRenderingContext2D, node?: BSTNode) => {
+const _drawNodes = (ctx: CanvasRenderingContext2D, node?: BSTNode) => {
   if (!node) return;
 
-  const adjList = calculateNodePositions(root);
+  const adjList = nodePositions(root);
   const { height, width } = ctx.canvas;
-  const { radius, nodeHeightSpacing } = DEFAULT_CONFIG;
+  const { radius, nodeHeightSpacing, fontSize } = DEFAULT_CONFIG;
 
   adjList
     .entries()
@@ -39,58 +41,22 @@ const _drawNodeWithCoords = (ctx: CanvasRenderingContext2D, node?: BSTNode) => {
       edges,
     }))
     .forEach(({ value, x, y, edges }) => {
-      drawNode(ctx, x, y, value);
+      fillCircle({ ctx, x, y, radius });
+      drawCircle({ ctx, x, y, radius });
+      writeText({ ctx, x, y, fontSize, value });
       edges
         .map((n) => adjList.get(n) as Vertice)
         .forEach(({ xOffset, yOffset }) => {
-          connectEdge(
+          drawBezierCurve({
             ctx,
-            x,
-            xOffset * width,
-            y + radius,
-            yOffset * height + nodeHeightSpacing - radius,
-          );
+            start: { x, y: y + radius },
+            end: {
+              x: xOffset * width,
+              y: yOffset * height + nodeHeightSpacing - radius,
+            },
+          });
         });
     });
-};
-
-const drawNode = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  value: number | string,
-) => {
-  ctx.beginPath();
-  ctx.arc(x, y, DEFAULT_CONFIG.radius, 0, 2 * Math.PI, false);
-  ctx.fillStyle = "lightblue";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(x, y, DEFAULT_CONFIG.radius, 0, 2 * Math.PI, false);
-  ctx.strokeStyle = "purple";
-  ctx.stroke();
-
-  ctx.font = `${DEFAULT_CONFIG.fontSize}pt serif`;
-  ctx.fillStyle = "black";
-  ctx.textAlign = "center";
-  ctx.fillText(`${value}`, x, y + DEFAULT_CONFIG.fontSize / 2);
-};
-
-const connectEdge = (
-  ctx: CanvasRenderingContext2D,
-  x1: number,
-  x2: number,
-  y1: number,
-  y2: number,
-) => {
-  const xHalf = (x1 + x2) / 2;
-  const yHalf = (y1 + y2) / 2;
-
-  ctx.beginPath();
-  ctx.strokeStyle = "green";
-  ctx.moveTo(x1, y1);
-  ctx.bezierCurveTo(xHalf, yHalf, x2, yHalf, x2, y2);
-  ctx.stroke();
 };
 
 export default function BSTPage() {
