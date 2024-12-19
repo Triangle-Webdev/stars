@@ -1,4 +1,4 @@
-import { childOffset, nodePositions, node, height } from "./node";
+import { node, height, treeToMatrix, rowGenerator } from "./node";
 
 describe("node logic", () => {
   describe("findDepth", () => {
@@ -23,42 +23,34 @@ describe("node logic", () => {
     });
   });
 
-  describe("calculateChildOffset", () => {
-    it.each([
-      [0.5, 1, { left: 0.25, right: 0.75 }],
-      [0.25, 2, { left: 0.125, right: 0.375 }],
-      [0.75, 2, { left: 0.625, right: 0.875 }],
-    ])(
-      "takes coords start %i and end %i to calculate child position %i",
-      (xStart, xEnd, expected) => {
-        expect(childOffset(xStart, xEnd)).toEqual(expected);
-      },
-    );
+  describe("inOrderArray", () => {
+    it("should work", () => {
+      const root = node(2, node(1), node(3));
+      const expected = [[2], [1, 3]];
+      const actual = treeToMatrix(root);
+      expect(actual).toEqual(expected);
+    });
+
+    it("should place nulls in result when there is no node", () => {
+      const root = node(2, undefined, node(3));
+      const expected = [[2], [null, 3]];
+      expect(treeToMatrix(root)).toEqual(expected);
+    });
+
+    it("should place nulls in result when there are nested nulls", () => {
+      const root = node(2, undefined, node(3, node(4)));
+      const expected = [[2], [null, 3], [null, null, 4, null]];
+      const actual = treeToMatrix(root);
+      expect(actual).toEqual(expected);
+    });
   });
 
-  describe("calculateNodePositions", () => {
-    it("should return offset 0, 0 for root node", () => {
-      const expected = new Map();
-      expected.set(1, { value: 1, xOffset: 0.5, yOffset: 0, edges: [] });
-      const actual = nodePositions(node(1));
-      expect(actual).toEqual(expected);
-    });
-
-    it("should have an edge when a node has a child", () => {
-      const expected = new Map();
-      expected.set(1, { value: 1, xOffset: 0.5, yOffset: 0, edges: [2] });
-      expected.set(2, { value: 2, xOffset: 0.25, yOffset: 0.5, edges: [] });
-      const actual = nodePositions(node(1, node(2)));
-      expect(actual).toEqual(expected);
-    });
-
-    it("should have two edges when a node has two children", () => {
-      const expected = new Map();
-      expected.set(1, { value: 1, xOffset: 0.5, yOffset: 0, edges: [2, 3] });
-      expected.set(2, { value: 2, xOffset: 0.25, yOffset: 0.5, edges: [] });
-      expected.set(3, { value: 3, xOffset: 0.75, yOffset: 0.5, edges: [] });
-      const actual = nodePositions(node(1, node(2), node(3)));
-      expect(actual).toEqual(expected);
+  describe("rowGenerator", () => {
+    it("should return all values not appearing in the previous row +/- the offset", () => {
+      const generator = rowGenerator();
+      expect(generator.next().value).toEqual([0.5]);
+      expect(generator.next().value).toEqual([0.25, 0.75]);
+      expect(generator.next().value).toEqual([0.125, 0.375, 0.625, 0.875]);
     });
   });
 });

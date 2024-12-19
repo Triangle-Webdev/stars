@@ -17,85 +17,39 @@ const _height = (curDepth: number, node?: BSTNode): number =>
 
 export const height = (node?: BSTNode): number => _height(0, node);
 
-export type Vertice = {
-  value: number;
-  xOffset: number;
-  yOffset: number;
-  edges: number[];
-};
+export type ResultArr = Array<Array<number | null>>;
 
-export type Graph = Map<number, Vertice>;
+function inorder(row: number, col: number, ans: ResultArr, node?: BSTNode) {
+  if (!node) return;
+  ans[row][col] = node.value;
+  inorder(row + 1, col * 2, ans, node.left);
+  inorder(row + 1, col * 2 + 1, ans, node.right);
+}
 
-export const childOffset = (
-  parentXOffset: number,
-  depth: number,
-): {
-  left: number;
-  right: number;
-} => {
-  const additionalOffset = 1 / 2 ** (depth + 1);
-  return {
-    left: parentXOffset - additionalOffset,
-    right: parentXOffset + additionalOffset,
-  };
-};
+export const range = (start: number, stop: number, step: number = 1) =>
+  Array.from(
+    { length: Math.ceil((stop - start) / step) },
+    (_, i) => start + i * step,
+  );
 
-const yOffset = (maxDepth: number) => (curDepth: number) =>
-  (curDepth - 1) / maxDepth;
+export function treeToMatrix(root?: BSTNode) {
+  let ans = Array.from(range(0, height(root)), (_, i) =>
+    Array(2 ** i).fill(null),
+  );
+  inorder(0, 0, ans, root);
+  return ans;
+}
 
-const _nodePositions = ({
-  value,
-  left,
-  right,
-  depth,
-  xOffset,
-  adjacencyList,
-  calcYOffset,
-}: BSTNode & {
-  depth: number;
-  xOffset: number;
-  adjacencyList: Graph;
-  calcYOffset: (curDepth: number) => number;
-}): Graph => {
-  let edges: number[] = [];
-  const childCoords = childOffset(xOffset, depth);
-  if (left) {
-    edges.push(left.value);
-    _nodePositions({
-      ...left,
-      depth: depth + 1,
-      xOffset: childCoords.left,
-      adjacencyList,
-      calcYOffset,
-    });
+export function* rowGenerator() {
+  let denominator = 1;
+  let existing: Set<number> = new Set();
+
+  while (true) {
+    denominator = denominator * 2;
+    const possibleXValues = new Set(
+      range(1, denominator).map((i) => i / denominator),
+    );
+    yield Array.from(possibleXValues).filter((e) => !existing.has(e));
+    existing = new Set(possibleXValues);
   }
-  if (right) {
-    edges.push(right.value);
-    _nodePositions({
-      ...right,
-      depth: depth + 1,
-      xOffset: childCoords.right,
-      adjacencyList,
-      calcYOffset,
-    });
-  }
-  adjacencyList.set(value, {
-    value,
-    xOffset,
-    yOffset: calcYOffset(depth),
-    edges,
-  });
-  return adjacencyList;
-};
-
-export const nodePositions = ({ value, left, right }: BSTNode): Graph => {
-  return _nodePositions({
-    value,
-    left,
-    right,
-    depth: 1,
-    xOffset: 0.5,
-    adjacencyList: new Map(),
-    calcYOffset: yOffset(height({ value, left, right })),
-  });
-};
+}

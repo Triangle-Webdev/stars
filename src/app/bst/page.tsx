@@ -1,23 +1,7 @@
 "use client";
 import { Canvas, Drawable } from "./canvas";
-import {
-  drawBezierCurve,
-  drawCircle,
-  fillCircle,
-  writeText,
-} from "./drawUtils";
-import { BSTNode, nodePositions, node, Vertice } from "./node";
-
-const DEFAULT_CONFIG = {
-  radius: 40,
-  nodeWidthSpacing: 25,
-  nodeHeightSpacing: 100,
-  fontSize: 20,
-};
-
-const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
-  _drawNodes(ctx, node(1));
-};
+import { drawCircle, fillCircle, writeText } from "./drawUtils";
+import { node, rowGenerator, treeToMatrix } from "./node";
 
 const root = node(
   1,
@@ -25,38 +9,37 @@ const root = node(
   node(3, node(6), node(7)),
 );
 
-const _drawNodes = (ctx: CanvasRenderingContext2D, node?: BSTNode) => {
-  if (!node) return;
+const drawNode = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  value: number,
+) => {
+  drawCircle({ ctx, point: { x, y }, radius: 40 });
+  fillCircle({ ctx, point: { x, y }, radius: 40 });
+  writeText({
+    ctx,
+    point: { x, y },
+    fontSize: 20,
+    value,
+  });
+};
 
-  const adjList = nodePositions(root);
-  const { height, width } = ctx.canvas;
-  const { radius, nodeHeightSpacing, fontSize } = DEFAULT_CONFIG;
+const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
+  const gen = rowGenerator();
+  const tree = treeToMatrix(root);
 
-  adjList
-    .entries()
-    .map(([k, { value, xOffset, yOffset, edges }]) => ({
-      value: value,
-      x: xOffset * width,
-      y: yOffset * height + nodeHeightSpacing,
-      edges,
-    }))
-    .forEach(({ value, x, y, edges }) => {
-      fillCircle({ ctx, x, y, radius });
-      drawCircle({ ctx, x, y, radius });
-      writeText({ ctx, x, y, fontSize, value });
-      edges
-        .map((n) => adjList.get(n) as Vertice)
-        .forEach(({ xOffset, yOffset }) => {
-          drawBezierCurve({
-            ctx,
-            start: { x, y: y + radius },
-            end: {
-              x: xOffset * width,
-              y: yOffset * height + nodeHeightSpacing - radius,
-            },
-          });
-        });
-    });
+  tree.map((row, rowIndex) => {
+    const nextRow = gen.next().value as number[];
+    return row
+      .map((e, elementIndex) => ({
+        x: nextRow[elementIndex] * ctx.canvas.width,
+        y: (rowIndex + 1) * 0.2 * ctx.canvas.height,
+        value: e,
+      }))
+      .filter((e) => !!e.value)
+      .forEach((e) => drawNode(ctx, e.x, e.y, e.value));
+  });
 };
 
 export default function BSTPage() {
