@@ -1,7 +1,20 @@
 "use client";
 import { Canvas, Drawable } from "./canvas";
-import { drawCircle, fillCircle, writeText } from "./drawUtils";
-import { node, rowGenerator, treeToMatrix } from "./node";
+import {
+  bezierCurve,
+  drawCircle,
+  fillCircle,
+  Point,
+  writeText,
+} from "./drawUtils";
+import { range } from "./fpUtils";
+import {
+  adjacencyList,
+  BSTNode,
+  node,
+  rowGenerator,
+  treeToMatrix,
+} from "./node";
 
 const root = node(
   1,
@@ -25,20 +38,68 @@ const drawNode = (
   });
 };
 
-const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
+const DrawUtils = {
+  scale: (size: number) => (coefs: number[]) => coefs.map((x) => x * size),
+};
+
+type StupdBSTType = { coords: Point; value: number; children: number[] };
+
+const drawBST = (
+  width: number,
+  height: number,
+  root?: BSTNode,
+): Array<StupdBSTType> => {
   const gen = rowGenerator();
   const tree = treeToMatrix(root);
+  const scaleX = DrawUtils.scale(width);
+  const adjList = adjacencyList(root);
 
-  tree.map((row, rowIndex) => {
-    const nextRow = gen.next().value as number[];
-    return row
-      .map((e, elementIndex) => ({
-        x: nextRow[elementIndex] * ctx.canvas.width,
-        y: (rowIndex + 1) * 0.2 * ctx.canvas.height,
-        value: e,
-      }))
-      .filter((e) => !!e.value)
-      .forEach((e) => drawNode(ctx, e.x, e.y, e.value));
+  return tree
+    .map((row, rowIndex) => {
+      const nextRow = gen.next().value as number[];
+      const coords = scaleX(nextRow).map((x) => ({
+        x,
+        y: (rowIndex + 1) * 0.2 * height,
+      }));
+
+      const mappedInner = range(0, coords.length)
+        .map((_, elementIndex) => {
+          return {
+            coords: coords[elementIndex],
+            value: row[elementIndex],
+            children:
+              adjList.get(row[elementIndex])?.children || ([] as number[]),
+          } as StupdBSTType;
+        })
+        .filter((e) => e.value !== null);
+      return mappedInner;
+    })
+    .flat();
+};
+
+// adjList.map(...): DrawAction[];
+const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
+  const data = drawBST(ctx.canvas.width, ctx.canvas.height, root);
+  const mappedData = new Map(data.map((e) => [e.value, e]));
+  const drawCurve = bezierCurve("green")(ctx);
+
+  const mapped = data.map((e) => {
+    return {
+      ...e,
+      children: e.children
+        .map((child) => mappedData.get(child)?.coords)
+        .filter((e) => !!e),
+    };
+  });
+
+  mapped.forEach((e) => {
+    drawNode(ctx, e.coords.x, e.coords.y, e.value);
+    e.children.forEach((childCoords) => {
+      drawCurve({
+        from: { x: e.coords.x, y: e.coords.y + 40 },
+        to: { x: childCoords.x, y: childCoords.y - 40 },
+      });
+    });
   });
 };
 

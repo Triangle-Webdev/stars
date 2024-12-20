@@ -1,3 +1,5 @@
+import { FPUtils, range } from "./fpUtils";
+
 export type BSTNode = {
   value: number;
   left?: BSTNode;
@@ -26,12 +28,6 @@ function inorder(row: number, col: number, ans: ResultArr, node?: BSTNode) {
   inorder(row + 1, col * 2 + 1, ans, node.right);
 }
 
-export const range = (start: number, stop: number, step: number = 1) =>
-  Array.from(
-    { length: Math.ceil((stop - start) / step) },
-    (_, i) => start + i * step,
-  );
-
 export function treeToMatrix(root?: BSTNode) {
   let ans = Array.from(range(0, height(root)), (_, i) =>
     Array(2 ** i).fill(null),
@@ -40,16 +36,23 @@ export function treeToMatrix(root?: BSTNode) {
   return ans;
 }
 
-export function* rowGenerator() {
-  let denominator = 1;
-  let existing: Set<number> = new Set();
+export const rowGenerator = FPUtils.half(1);
 
-  while (true) {
-    denominator = denominator * 2;
-    const possibleXValues = new Set(
-      range(1, denominator).map((i) => i / denominator),
-    );
-    yield Array.from(possibleXValues).filter((e) => !existing.has(e));
-    existing = new Set(possibleXValues);
-  }
-}
+export const traverse = (cb: (node: BSTNode) => void, root?: BSTNode) => {
+  if (!root) return;
+  traverse(cb, root.left);
+  cb(root);
+  traverse(cb, root.right);
+};
+
+export const adjacencyList = (root?: BSTNode) => {
+  const result: Map<number, { children: number[] }> = new Map();
+  const cb = (node: BSTNode) => {
+    const children = [];
+    if (!!node.left) children.push(node.left.value);
+    if (!!node.right) children.push(node.right.value);
+    result.set(node.value, { children });
+  };
+  traverse(cb, root);
+  return result;
+};

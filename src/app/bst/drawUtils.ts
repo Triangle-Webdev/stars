@@ -1,5 +1,3 @@
-import { BSTNode, range, ResultArr } from "./node";
-
 export type Point = { x: number; y: number };
 
 type Drawable = {
@@ -64,15 +62,4 @@ export const writeText = ({
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
   ctx.fillText(`${value}`, point.x, point.y + fontSize / 2);
-};
-
-const bstXOffsets = (arr: ResultArr) => {
-  let curCoef = 1;
-  return arr.map((row, i) => row.length);
-};
-
-export const drawBST = (arr: ResultArr) => {
-  let curCoef = 1;
-  for (const row in arr) {
-  }
 };
