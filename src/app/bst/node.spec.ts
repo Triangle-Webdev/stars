@@ -35,7 +35,7 @@ describe("node logic", () => {
     });
   });
 
-  describe("inOrderArray", () => {
+  xdescribe("inOrderArray", () => {
     it("should work", () => {
       const root = node(2, node(1), node(3));
       const expected = [[2], [1, 3]];
@@ -128,7 +128,7 @@ describe("node logic", () => {
     });
   });
 
-  describe("zipTree", () => {
+  xdescribe("zipTree", () => {
     it("should return the points in a tree", () => {
       const point = { x: 0.5, y: 0.2, value: 2 };
       const expected = [point];

@@ -1,3 +1,4 @@
+import { Point } from "./drawUtils";
 import { FPUtils, range, zip3 } from "./fpUtils";
 
 export type BSTNode = {
@@ -19,17 +20,17 @@ const _height = (curDepth: number, node?: BSTNode): number =>
 
 export const height = (node?: BSTNode): number => _height(0, node);
 
-export type ResultArr = Array<Array<number | null>>;
+export type ResultArr = Array<Array<BSTNode | null>>;
 
 function inorder(row: number, col: number, ans: ResultArr, node?: BSTNode) {
   if (!node) return;
-  ans[row][col] = node.value;
+  ans[row][col] = node;
   inorder(row + 1, col * 2, ans, node.left);
   inorder(row + 1, col * 2 + 1, ans, node.right);
 }
 
-export function treeToMatrix(root?: BSTNode) {
-  let ans = Array.from(range(0, height(root)), (_, i) =>
+export function treeToMatrix(root?: BSTNode): ResultArr {
+  let ans: ResultArr = Array.from(range(0, height(root)), (_, i) =>
     Array(2 ** i).fill(null),
   );
   inorder(0, 0, ans, root);
@@ -94,6 +95,12 @@ export const DrawUtils = {
       coefs.map((x) => x * size),
 };
 
+export type DrawableNode = {
+  point: Point;
+  value: number;
+  children: number[];
+};
+
 export const zipTree = ({
   height,
   width,
@@ -102,13 +109,28 @@ export const zipTree = ({
   height: number;
   width: number;
   root?: BSTNode;
-}) => {
+}): DrawableNode[] => {
   const xCoords = DrawUtils.scale(width)(treeXCoefs(root));
   const yCoords = DrawUtils.scale(height)(treeYCoefs(root));
-  const values = treeToMatrix(root).flat();
+  const matrix: Array<BSTNode> = treeToMatrix(root)
+    .flat()
+    .filter((e) => !!e);
+
+  const children = matrix.map((e) => {
+    const childVals = [];
+    if (e.left) childVals.push(e.left.value);
+    if (e.right) childVals.push(e.right.value);
+    return childVals;
+  });
+
+  const values = matrix.map((e) => e.value);
+
   return range(0, xCoords.length).map((i) => ({
-    x: xCoords[i],
-    y: yCoords[i],
+    point: {
+      x: xCoords[i],
+      y: yCoords[i],
+    },
     value: values[i],
+    children: children[i],
   }));
 };

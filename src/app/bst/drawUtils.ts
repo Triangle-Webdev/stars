@@ -4,16 +4,16 @@ type Drawable = {
   ctx: CanvasRenderingContext2D;
 };
 
-type CurveParams = {
+type LineParams = {
   from: Point;
   to: Point;
 };
 
-type Curve = (
+type Line = (
   color: string,
-) => (ctx: CanvasRenderingContext2D) => ({ from, to }: CurveParams) => void;
+) => (ctx: CanvasRenderingContext2D) => ({ from, to }: LineParams) => void;
 
-export const bezierCurve: Curve =
+export const bezierCurve: Line =
   (color) =>
   (ctx) =>
   ({ from, to }) => {
@@ -24,6 +24,17 @@ export const bezierCurve: Curve =
     ctx.strokeStyle = color;
     ctx.moveTo(from.x, from.y);
     ctx.bezierCurveTo(xHalf, yHalf, to.x, yHalf, to.x, to.y);
+    ctx.stroke();
+  };
+
+export const straight: Line =
+  (color) =>
+  (ctx) =>
+  ({ from, to }) => {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
     ctx.stroke();
   };
 
