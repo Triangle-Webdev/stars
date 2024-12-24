@@ -7,6 +7,9 @@ import {
   BSTNode,
   traverse,
   adjacencyList,
+  treeXCoefs,
+  treeYCoefs,
+  zipTree,
 } from "./node";
 
 describe("node logic", () => {
@@ -94,6 +97,56 @@ describe("node logic", () => {
       expected.set(3, { children: [] });
       const actual = adjacencyList(root);
       expect(actual).toEqual(expected);
+    });
+  });
+
+  describe("treeYcoefs", () => {
+    it("should return y values", () => {
+      const expected = [0.2];
+      const actual = treeYCoefs(node(2));
+      expect(expected).toEqual(actual);
+    });
+
+    it("should flatten y values array", () => {
+      const expected = [0.2, 0.4, 0.4];
+      const actual = treeYCoefs(node(2, node(1), node(3)));
+      expect(expected).toEqual(actual);
+    });
+  });
+
+  describe("treeXcoefs", () => {
+    it("should return x values", () => {
+      const expected = [0.5];
+      const actual = treeXCoefs(node(2));
+      expect(expected).toEqual(actual);
+    });
+
+    it("should flatten x values array", () => {
+      const expected = [0.5, 0.25, 0.75];
+      const actual = treeXCoefs(node(2, node(1), node(3)));
+      expect(expected).toEqual(actual);
+    });
+  });
+
+  describe("zipTree", () => {
+    it("should return the points in a tree", () => {
+      const point = { x: 0.5, y: 0.2, value: 2 };
+      const expected = [point];
+      const actual = zipTree({ height: 1, width: 1, root: node(2) });
+      expect(expected).toEqual(actual);
+    });
+
+    it("should return the points in a tree with children", () => {
+      const p1 = { x: 0.5, y: 0.2, value: 2 };
+      const p2 = { x: 0.25, y: 0.4, value: 1 };
+      const p3 = { x: 0.75, y: 0.4, value: 3 };
+      const expected = [p1, p2, p3];
+      const actual = zipTree({
+        height: 1,
+        width: 1,
+        root: node(2, node(1), node(3)),
+      });
+      expect(expected).toEqual(actual);
     });
   });
 });

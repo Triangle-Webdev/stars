@@ -1,4 +1,4 @@
-import { FPUtils, range } from "./fpUtils";
+import { FPUtils, range, zip3 } from "./fpUtils";
 
 export type BSTNode = {
   value: number;
@@ -49,10 +49,66 @@ export const adjacencyList = (root?: BSTNode) => {
   const result: Map<number, { children: number[] }> = new Map();
   const cb = (node: BSTNode) => {
     const children = [];
-    if (!!node.left) children.push(node.left.value);
-    if (!!node.right) children.push(node.right.value);
+    if (node.left) children.push(node.left.value);
+    if (node.right) children.push(node.right.value);
     result.set(node.value, { children });
   };
   traverse(cb, root);
   return result;
+};
+
+export const treeXCoefs = (root?: BSTNode) => {
+  const gen = rowGenerator();
+  var h = height(root);
+  const acc = [];
+  while (h > 0) {
+    acc.push(gen.next().value);
+    h--;
+  }
+  return acc.flat();
+};
+
+function* yCoefGenerator(coefPerLevel: number): Generator<number[]> {
+  let level = 0;
+  while (true) {
+    yield new Array(Math.pow(2, level)).fill((1 + level) * coefPerLevel);
+    level++;
+  }
+}
+
+export const treeYCoefs = (root?: BSTNode): number[] => {
+  const gen = yCoefGenerator(0.2);
+  var h = height(root);
+  const acc = [];
+  while (h > 0) {
+    acc.push(gen.next().value);
+    h--;
+  }
+  return acc.flat();
+};
+
+export const DrawUtils = {
+  scale:
+    (size: number) =>
+    (coefs: number[]): number[] =>
+      coefs.map((x) => x * size),
+};
+
+export const zipTree = ({
+  height,
+  width,
+  root,
+}: {
+  height: number;
+  width: number;
+  root?: BSTNode;
+}) => {
+  const xCoords = DrawUtils.scale(width)(treeXCoefs(root));
+  const yCoords = DrawUtils.scale(height)(treeYCoefs(root));
+  const values = treeToMatrix(root).flat();
+  return range(0, xCoords.length).map((i) => ({
+    x: xCoords[i],
+    y: yCoords[i],
+    value: values[i],
+  }));
 };
