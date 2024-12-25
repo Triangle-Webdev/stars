@@ -1,14 +1,7 @@
 "use client";
-import { Canvas, Drawable } from "./canvas";
-import {
-  bezierCurve,
-  drawCircle,
-  fillCircle,
-  Point,
-  straight,
-  writeText,
-} from "./drawUtils";
-import { BSTNode, node, zipTree, DrawableNode } from "./node";
+import { useState } from "react";
+import { Canvas } from "./canvas";
+import { node, buildDrawer, treeToDrawableMap } from "./node";
 
 const root = node(
   1,
@@ -16,58 +9,46 @@ const root = node(
   node(3, node(6), node(7)),
 );
 
-const drawBezier = bezierCurve("green");
-const drawStraightLine = straight("green");
+const blueNodePurpleBorder = buildDrawer({
+  color: (node) => "lightblue",
+  border: (node) => "purple",
+  radius: 40,
+  edges: "bezier",
+});
 
-function nodeToDrawable(
-  value: number,
-  map: Map<number, DrawableNode>,
-): Drawable {
-  const drawableNode = map.get(value) as DrawableNode;
-  const from = { x: drawableNode.point.x, y: drawableNode.point.y + 40 };
+const greenNodeBlueBorder = buildDrawer({
+  color: (node) => {
+    return node.value === 2 ? "green" : "red";
+  },
+  border: (node) => "blue",
+  radius: 40,
+  edges: "straight",
+});
 
-  return (ctx) => {
-    fillCircle({ ctx, point: drawableNode.point, radius: 40 });
-    drawCircle({ ctx, point: drawableNode.point, radius: 40 });
-    writeText({
-      ctx,
-      point: drawableNode.point,
-      fontSize: 20,
-      value: drawableNode.value,
-    });
+const BSTPage = () => {
+  const [state, setState] = useState(() => greenNodeBlueBorder);
 
-    drawableNode.children
-      .map((child) => map.get(child)!.point as Point)
-      .map((childPoint) => ({
-        from,
-        to: { x: childPoint.x, y: childPoint.y },
-      }))
-      .forEach((curve) => drawStraightLine(ctx)(curve));
+  const drawAction = (ctx: CanvasRenderingContext2D) => {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    const map = treeToDrawableMap(ctx.canvas.width, ctx.canvas.height, root);
+    map
+      .keys()
+      .map((k) => state(k, map))
+      .forEach((e) => e(ctx));
   };
-}
 
-function treeToDrawableMap(
-  width: number,
-  height: number,
-  root?: BSTNode,
-): Map<number, DrawableNode> {
-  const zipped: DrawableNode[] = zipTree({
-    height,
-    width,
-    root,
-  }).filter((e) => !!e.value);
-
-  return new Map(zipped.map((e) => [e.value, e]));
-}
-
-const drawAction: Drawable = (ctx: CanvasRenderingContext2D) => {
-  const map = treeToDrawableMap(ctx.canvas.width, ctx.canvas.height, root);
-  map
-    .keys()
-    .map((k) => nodeToDrawable(k, map))
-    .forEach((e) => e(ctx));
+  return (
+    <div>
+      <button onClick={() => setState(() => greenNodeBlueBorder)}>
+        Click me blue
+      </button>
+      <button onClick={() => setState(() => blueNodePurpleBorder)}>
+        Click me green
+      </button>
+      <Canvas drawAction={drawAction} />
+    </div>
+  );
 };
 
-export default function BSTPage() {
-  return <Canvas drawAction={drawAction} />;
-}
+export default BSTPage;

@@ -1,5 +1,13 @@
-import { Point } from "./drawUtils";
-import { FPUtils, range, zip3 } from "./fpUtils";
+import { Drawable } from "./canvas";
+import {
+  bezierCurve,
+  drawCircle,
+  fillCircle,
+  Point,
+  straight,
+  writeText,
+} from "./drawUtils";
+import { FPUtils, range } from "./fpUtils";
 
 export type BSTNode = {
   value: number;
@@ -37,8 +45,6 @@ export function treeToMatrix(root?: BSTNode): ResultArr {
   return ans;
 }
 
-export const rowGenerator = FPUtils.half(1);
-
 export const traverse = (cb: (node: BSTNode) => void, root?: BSTNode) => {
   if (!root) return;
   traverse(cb, root.left);
@@ -59,7 +65,7 @@ export const adjacencyList = (root?: BSTNode) => {
 };
 
 export const treeXCoefs = (root?: BSTNode) => {
-  const gen = rowGenerator();
+  const gen = FPUtils.half(1)();
   var h = height(root);
   const acc = [];
   while (h > 0) {
@@ -134,3 +140,58 @@ export const zipTree = ({
     children: children[i],
   }));
 };
+
+export type DrawableNodeOpts = {
+  color: (node: BSTNode) => "lightblue" | "green" | "red";
+  border: (node: BSTNode) => "purple" | "blue";
+  radius: number;
+  edges: "straight" | "bezier";
+};
+
+export const buildDrawer = (opts: DrawableNodeOpts) => {
+  return function (value: number, map: Map<number, DrawableNode>): Drawable {
+    const drawableNode = map.get(value) as DrawableNode;
+    const fill = fillCircle(opts.color(drawableNode));
+    const border = drawCircle(opts.border(drawableNode));
+    const drawEdge =
+      opts.edges === "straight" ? straight("blue") : bezierCurve("blue");
+
+    const from = {
+      x: drawableNode.point.x,
+      y: drawableNode.point.y + opts.radius,
+    };
+
+    return (ctx) => {
+      fill({ ctx, point: drawableNode.point, radius: opts.radius });
+      border({ ctx, point: drawableNode.point, radius: opts.radius });
+      writeText({
+        ctx,
+        point: drawableNode.point,
+        fontSize: 20,
+        value: drawableNode.value,
+      });
+
+      drawableNode.children
+        .map((child) => map.get(child)!.point as Point)
+        .map((childPoint) => ({
+          from,
+          to: { x: childPoint.x, y: childPoint.y },
+        }))
+        .forEach((curve) => drawEdge(ctx)(curve));
+    };
+  };
+};
+
+export function treeToDrawableMap(
+  width: number,
+  height: number,
+  root?: BSTNode,
+): Map<number, DrawableNode> {
+  const zipped: DrawableNode[] = zipTree({
+    height,
+    width,
+    root,
+  }).filter((e) => !!e.value);
+
+  return new Map(zipped.map((e) => [e.value, e]));
+}

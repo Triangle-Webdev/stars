@@ -1,9 +1,8 @@
-import { zip } from "./fpUtils";
+import { FPUtils, zip } from "./fpUtils";
 import {
   node,
   height,
   treeToMatrix,
-  rowGenerator,
   BSTNode,
   traverse,
   adjacencyList,
@@ -59,7 +58,7 @@ describe("node logic", () => {
 
   describe("rowGenerator", () => {
     it("should return all values not appearing in the previous row +/- the offset", () => {
-      const generator = rowGenerator();
+      const generator = FPUtils.half(1)();
       expect(generator.next().value).toEqual([0.5]);
       expect(generator.next().value).toEqual([0.25, 0.75]);
       expect(generator.next().value).toEqual([0.125, 0.375, 0.625, 0.875]);

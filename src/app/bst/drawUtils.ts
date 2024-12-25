@@ -49,19 +49,23 @@ type CircleParams = {
   radius: number;
 };
 
-export const fillCircle = ({ ctx, point, radius }: CircleParams & Drawable) => {
-  ctx.beginPath();
-  ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI, false);
-  ctx.fillStyle = "lightblue";
-  ctx.fill();
-};
+export const fillCircle =
+  (color: string) =>
+  ({ ctx, point, radius }: CircleParams & Drawable) => {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
 
-export const drawCircle = ({ ctx, point, radius }: CircleParams & Drawable) => {
-  ctx.beginPath();
-  ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI, false);
-  ctx.strokeStyle = "purple";
-  ctx.stroke();
-};
+export const drawCircle =
+  (color: string) =>
+  ({ ctx, point, radius }: CircleParams & Drawable) => {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI, false);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  };
 
 export const writeText = ({
   ctx,
