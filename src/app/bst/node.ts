@@ -141,20 +141,48 @@ export const zipTree = ({
   }));
 };
 
+type Color =
+  | "yellow"
+  | "lightblue"
+  | "green"
+  | "red"
+  | "orange"
+  | "purple"
+  | "teal"
+  | "blue"
+  | "black";
+
+export type DrawOpts = {
+  color: Color;
+  border: Color;
+};
+
+export type EdgeType = "bezier" | "straight";
+
+export type EdgeOpts = {
+  type: EdgeType;
+  color: Color;
+};
+
 export type DrawableNodeOpts = {
-  color: (node: BSTNode) => "lightblue" | "green" | "red";
-  border: (node: BSTNode) => "purple" | "blue";
+  default: DrawOpts;
+  highlighted: DrawOpts;
   radius: number;
-  edges: "straight" | "bezier";
+  edges: EdgeOpts;
+  isHighlighted: (value: number) => boolean;
 };
 
 export const buildDrawer = (opts: DrawableNodeOpts) => {
   return function (value: number, map: Map<number, DrawableNode>): Drawable {
     const drawableNode = map.get(value) as DrawableNode;
-    const fill = fillCircle(opts.color(drawableNode));
-    const border = drawCircle(opts.border(drawableNode));
+    const theme = opts.isHighlighted(value) ? opts.highlighted : opts.default;
+    const fill = fillCircle(theme.color);
+    const border = drawCircle(theme.border);
+
     const drawEdge =
-      opts.edges === "straight" ? straight("blue") : bezierCurve("blue");
+      opts.edges.type === "straight"
+        ? straight(opts.edges.color)
+        : bezierCurve(opts.edges.color);
 
     const from = {
       x: drawableNode.point.x,

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Canvas } from "./canvas";
-import { node, buildDrawer, treeToDrawableMap } from "./node";
+import { node, buildDrawer, treeToDrawableMap, traverse } from "./node";
 
 const root = node(
   1,
@@ -9,43 +9,61 @@ const root = node(
   node(3, node(6), node(7)),
 );
 
-const blueNodePurpleBorder = buildDrawer({
-  color: (node) => "lightblue",
-  border: (node) => "purple",
-  radius: 40,
-  edges: "bezier",
-});
-
-const greenNodeBlueBorder = buildDrawer({
-  color: (node) => {
-    return node.value === 2 ? "green" : "red";
-  },
-  border: (node) => "blue",
-  radius: 40,
-  edges: "straight",
-});
-
 const BSTPage = () => {
-  const [state, setState] = useState(() => greenNodeBlueBorder);
+  const [selected, setSelected] = useState(0);
+
+  const defaultColors = { color: "lightblue", border: "purple" };
+  const highlightedColors = { color: "yellow", border: "black" };
+
+  const baseThemeOpts = {
+    default: defaultColors,
+    highlighted: highlightedColors,
+    edges: {
+      type: "bezier",
+      color: "purple",
+    },
+    radius: 40,
+    isHighlighted: (value: number) => selected === value,
+  };
+
+  const [theme, setTheme] = useState(() => baseThemeOpts);
+
+  const nextNode = () => {
+    setSelected(selected + 1);
+    setTheme(() => ({
+      ...baseThemeOpts,
+      isHighlighted: (v: number) => selected + 1 === v,
+    }));
+  };
+
+  const prevNode = () => {
+    setSelected(selected - 1);
+    setTheme(() => ({
+      ...baseThemeOpts,
+      isHighlighted: (v: number) => {
+        return selected - 1 === v;
+      },
+    }));
+  };
+
+  let nodes: number[] = [];
+  traverse((node) => nodes.push(node.value), root);
 
   const drawAction = (ctx: CanvasRenderingContext2D) => {
+    const draw = buildDrawer(theme as any);
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     const map = treeToDrawableMap(ctx.canvas.width, ctx.canvas.height, root);
     map
       .keys()
-      .map((k) => state(k, map))
+      .map((k) => draw(k, map))
       .forEach((e) => e(ctx));
   };
 
   return (
     <div>
-      <button onClick={() => setState(() => greenNodeBlueBorder)}>
-        Click me blue
-      </button>
-      <button onClick={() => setState(() => blueNodePurpleBorder)}>
-        Click me green
-      </button>
+      <button onClick={prevNode}>prev</button>
+      <button onClick={nextNode}>next</button>
       <Canvas drawAction={drawAction} />
     </div>
   );
