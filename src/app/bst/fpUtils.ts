@@ -1,3 +1,5 @@
+import { curry } from "ramda";
+
 export const range = (start: number, stop: number, step: number = 1) =>
   Array.from(
     { length: Math.ceil((stop - start) / step) },
@@ -36,9 +38,13 @@ export const half = (num: number) => {
   };
 };
 
+const compose = <T>(fn1: (a: T) => T, ...fns: Array<(a: T) => T>) =>
+  fns.reduce((prevFn, nextFn) => (value) => prevFn(nextFn(value)), fn1);
+
 export const FPUtils = {
   range,
   zip,
   zip3,
   half,
+  compose,
 };

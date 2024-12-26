@@ -1,6 +1,8 @@
+import { compose, map } from "ramda";
 import { Drawable } from "./canvas";
 import {
   bezierCurve,
+  doTheDamnDrawThing,
   drawCircle,
   fillCircle,
   Point,
@@ -8,6 +10,7 @@ import {
   writeText,
 } from "./drawUtils";
 import { FPUtils, range } from "./fpUtils";
+import { Impure } from "./impure";
 
 export type BSTNode = {
   value: number;
@@ -94,12 +97,7 @@ export const treeYCoefs = (root?: BSTNode): number[] => {
   return acc.flat();
 };
 
-export const DrawUtils = {
-  scale:
-    (size: number) =>
-    (coefs: number[]): number[] =>
-      coefs.map((x) => x * size),
-};
+const multiply = (first: number) => (second: number) => first * second;
 
 export type DrawableNode = {
   point: Point;
@@ -116,8 +114,9 @@ export const zipTree = ({
   width: number;
   root?: BSTNode;
 }): DrawableNode[] => {
-  const xCoords = DrawUtils.scale(width)(treeXCoefs(root));
-  const yCoords = DrawUtils.scale(height)(treeYCoefs(root));
+  const xCoords = map(multiply(width), treeXCoefs(root));
+  const yCoords = map(multiply(height), treeYCoefs(root));
+
   const matrix: Array<BSTNode> = treeToMatrix(root)
     .flat()
     .filter((e) => !!e);
@@ -190,14 +189,15 @@ export const buildDrawer = (opts: DrawableNodeOpts) => {
     };
 
     return (ctx) => {
-      fill({ ctx, point: drawableNode.point, radius: opts.radius });
-      border({ ctx, point: drawableNode.point, radius: opts.radius });
-      writeText({
-        ctx,
-        point: drawableNode.point,
-        fontSize: 20,
-        value: drawableNode.value,
-      });
+      doTheDamnDrawThing(
+        fill({ point: drawableNode.point, radius: opts.radius }),
+        border({ point: drawableNode.point, radius: opts.radius }),
+        writeText({
+          point: drawableNode.point,
+          fontSize: 20,
+          value: drawableNode.value,
+        }),
+      )(ctx);
 
       drawableNode.children
         .map((child) => map.get(child)!.point as Point)
@@ -205,7 +205,7 @@ export const buildDrawer = (opts: DrawableNodeOpts) => {
           from,
           to: { x: childPoint.x, y: childPoint.y },
         }))
-        .forEach((curve) => drawEdge(ctx)(curve));
+        .forEach((path) => drawEdge(path)(ctx));
     };
   };
 };

@@ -9,6 +9,10 @@ const root = node(
   node(3, node(6), node(7)),
 );
 
+// async function getStaticProps() {
+//   const
+// }
+
 const BSTPage = () => {
   const [selected, setSelected] = useState(0);
 
