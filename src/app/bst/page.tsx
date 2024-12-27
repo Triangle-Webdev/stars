@@ -1,7 +1,14 @@
 "use client";
 import { useState } from "react";
 import { Canvas } from "./canvas";
-import { node, buildDrawer, treeToDrawableMap, traverse } from "./node";
+import {
+  node,
+  buildDrawer,
+  treeToDrawableMap,
+  traverse,
+  BSTNode,
+} from "./node";
+import { BST } from "./bst";
 
 const root = node(
   1,
@@ -9,9 +16,20 @@ const root = node(
   node(3, node(6), node(7)),
 );
 
-// async function getStaticProps() {
-//   const
-// }
+const input = [1, 7, 4, 23, 8, 9, 4, 3, 5, 7, 9, 67, 6345, 324];
+
+const prettyPrint = (node: BSTNode, prefix = "", isLeft = true) => {
+  if (node === null) {
+    return;
+  }
+  if (node.right) {
+    prettyPrint(node.right, `${prefix}${isLeft ? "│   " : "    "}`, false);
+  }
+  console.log(`${prefix}${isLeft ? "└── " : "┌── "}${node.value}`);
+  if (node.left) {
+    prettyPrint(node.left, `${prefix}${isLeft ? "    " : "│   "}`, true);
+  }
+};
 
 const BSTPage = () => {
   const [selected, setSelected] = useState(0);
@@ -50,14 +68,16 @@ const BSTPage = () => {
     }));
   };
 
-  let nodes: number[] = [];
-  traverse((node) => nodes.push(node.value), root);
-
   const drawAction = (ctx: CanvasRenderingContext2D) => {
     const draw = buildDrawer(theme as any);
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    const map = treeToDrawableMap(ctx.canvas.width, ctx.canvas.height, root);
+    const map = treeToDrawableMap(
+      ctx.canvas.width,
+      ctx.canvas.height,
+      new BST(input).root,
+    );
+
     map
       .keys()
       .map((k) => draw(k, map))

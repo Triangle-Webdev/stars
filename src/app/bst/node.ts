@@ -1,4 +1,4 @@
-import { compose, map } from "ramda";
+import { map } from "ramda";
 import { Drawable } from "./canvas";
 import {
   bezierCurve,
@@ -10,7 +10,6 @@ import {
   writeText,
 } from "./drawUtils";
 import { FPUtils, range } from "./fpUtils";
-import { Impure } from "./impure";
 
 export type BSTNode = {
   value: number;
@@ -117,27 +116,33 @@ export const zipTree = ({
   const xCoords = map(multiply(width), treeXCoefs(root));
   const yCoords = map(multiply(height), treeYCoefs(root));
 
-  const matrix: Array<BSTNode> = treeToMatrix(root)
-    .flat()
-    .filter((e) => !!e);
+  const matrix: Array<BSTNode | null> = treeToMatrix(root).flat();
 
   const children = matrix.map((e) => {
     const childVals = [];
-    if (e.left) childVals.push(e.left.value);
-    if (e.right) childVals.push(e.right.value);
+    if (e?.left) childVals.push(e.left.value);
+    if (e?.right) childVals.push(e.right.value);
     return childVals;
   });
 
-  const values = matrix.map((e) => e.value);
+  const values = matrix.map((e) => e?.value);
 
-  return range(0, xCoords.length).map((i) => ({
-    point: {
-      x: xCoords[i],
-      y: yCoords[i],
-    },
-    value: values[i],
-    children: children[i],
-  }));
+  return range(0, xCoords.length)
+    .map((i) => {
+      if (xCoords[i] && yCoords[i] && values[i] && children[i]) {
+        return {
+          point: {
+            x: xCoords[i],
+            y: yCoords[i],
+          },
+          value: values[i],
+          children: children[i],
+        };
+      } else {
+        return null;
+      }
+    })
+    .filter((x) => !!x);
 };
 
 type Color =
